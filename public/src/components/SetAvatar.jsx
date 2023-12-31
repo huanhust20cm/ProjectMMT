@@ -21,11 +21,12 @@ export default function SetAvatar() {
     theme: "dark",
   };
 
-  useEffect(async () => {
-    if (!localStorage.getItem(process.env.REACT_APP_LOCALHOST_KEY))
+  useEffect(() => {
+    if (!localStorage.getItem(process.env.REACT_APP_LOCALHOST_KEY)) {
       navigate("/login");
-  }, []);
-
+    }
+  }, [navigate]);
+  
   const setProfilePicture = async () => {
     if (selectedAvatar === undefined) {
       toast.error("Please select an avatar", toastOptions);
@@ -52,18 +53,33 @@ export default function SetAvatar() {
     }
   };
 
-  useEffect(async () => {
-    const data = [];
-    for (let i = 0; i < 4; i++) {
-      const image = await axios.get(
-        `${api}/${Math.round(Math.random() * 1000)}`
-      );
-      const buffer = new Buffer(image.data);
-      data.push(buffer.toString("base64"));
-    }
-    setAvatars(data);
-    setIsLoading(false);
-  }, []);
+  useEffect(() => {
+    const fetchData = async () => {
+      const promises = [];
+      for (let i = 0; i < 4; i++) {
+        promises.push(
+          axios.get(`${api}/${Math.round(Math.random() * 1000)}`)
+            .then((response) => {
+              const buffer = new Buffer(response.data);
+              return buffer.toString("base64");
+            })
+        );
+      }
+  
+      try {
+        const avatars = await Promise.all(promises);
+        setAvatars(avatars);
+        setIsLoading(false);
+      } catch (error) {
+        console.error("Error fetching avatars:", error);
+        // Handle the error as needed
+        setIsLoading(false); // Ensure to set isLoading to false even in case of an error
+      }
+    };
+  
+    fetchData();
+  }, [api]);
+  
   return (
     <>
       {isLoading ? (
